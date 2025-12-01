@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocolo Violencia de Género - Urgencias Montilla</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        body {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- ICONOS (SVG Inline para evitar dependencias externas) ---
+        const Icons = {
+            ShieldAlert: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            ),
+            Info: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            ),
+            Eye: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            ),
+            Activity: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            ),
+            Brain: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            ),
+            PhoneCall: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            ),
+            Menu: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            ),
+            ChevronRight: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>
+            ),
+            FileText: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            ),
+            Stethoscope: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>
+            ),
+            Users: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            ),
+            AlertTriangle: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            ),
+            Siren: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7 12a5 5 0 0 1 5-5v0a5 5 0 0 1 5 5v6H7v-6Z"/><path d="M5 20a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2H5v-2Z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="M4.929 4.929l.707.707"/><path d="M12 12v6"/></svg>
+            ),
+            HeartPulse: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+            ),
+            CheckCircle: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ),
+            XCircle: ({size=24, className=""}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            )
+        };
+
+        // --- COMPONENTES PRINCIPALES ---
+
+        const Header = ({ setView, activeView }) => {
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            
+            const navItems = [
+                { id: 'home', label: 'Inicio', icon: Icons.Info },
+                { id: 'types', label: 'Tipos y Sospecha', icon: Icons.Eye },
+                { id: 'algorithm', label: 'Algoritmo', icon: Icons.Activity },
+                { id: 'cases', label: 'Casos Clínicos', icon: Icons.Brain },
+                { id: 'resources', label: 'Recursos', icon: Icons.PhoneCall },
+            ];
+
+            return (
+                <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
+                    <div className="max-w-6xl mx-auto flex justify-between items-center">
+                        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setView('home')}>
+                            <div className="bg-purple-600 p-2 rounded-lg">
+                                <Icons.ShieldAlert size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-lg md:text-xl leading-tight">Actuación en Urgencias</h1>
+                                <p className="text-xs text-purple-300 uppercase tracking-wider">Violencia de Género</p>
+                            </div>
+                        </div>
+                        
+                        {/* Desktop Nav */}
+                        <nav className="hidden md:flex space-x-1 bg-slate-800 p-1 rounded-lg">
+                            {navItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setView(item.id)}
+                                    className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
+                                        activeView === item.id 
+                                            ? 'bg-purple-600 text-white shadow-md' 
+                                            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                                    }`}
+                                >
+                                    <item.icon size={16} />
+                                    <span className="text-sm font-medium">{item.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+
+                        {/* Mobile Menu Icon */}
+                        <div className="md:hidden">
+                            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white p-2">
+                                <Icons.Menu />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Mobile Dropdown */}
+                    {mobileMenuOpen && (
+                         <div className="md:hidden mt-2 bg-slate-800 rounded-lg p-2 space-y-2">
+                            {navItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => { setView(item.id); setMobileMenuOpen(false); }}
+                                    className={`w-full flex items-center space-x-2 px-4 py-3 rounded-md transition-all ${
+                                        activeView === item.id 
+                                            ? 'bg-purple-600 text-white' 
+                                            : 'text-slate-300 hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <item.icon size={16} />
+                                    <span>{item.label}</span>
+                                </button>
+                            ))}
+                         </div>
+                    )}
+                </header>
+            );
+        };
+
+        const SectionTitle = ({ children, icon: Icon }) => (
+            <div className="flex items-center space-x-3 mb-6 border-b-2 border-purple-100 pb-2">
+                <div className="bg-purple-100 p-2 rounded-full">
+                    <Icon className="text-purple-600" size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800">{children}</h2>
+            </div>
+        );
+
+        // --- VISTAS ---
+
+        const HomeView = ({ setView }) => (
+            <div className="animate-fade-in space-y-8">
+                <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
+                        <Icons.ShieldAlert size={300} />
+                    </div>
+                    <div className="relative z-10 max-w-2xl">
+                        <h2 className="text-4xl font-extrabold mb-4">La Violencia de Género tiene muchas caras</h2>
+                        <p className="text-lg text-purple-100 mb-6">
+                            Guía interactiva basada en el protocolo del Hospital de Montilla y el Área de Gestión Sanitaria Sur de Córdoba.
+                            Herramienta de apoyo para la detección, valoración y actuación rápida en urgencias.
+                        </p>
+                        <button 
+                            onClick={() => setView('algorithm')}
+                            className="bg-white text-purple-700 hover:bg-purple-50 px-6 py-3 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center"
+                        >
+                            Ir al Algoritmo de Actuación <Icons.ChevronRight className="ml-2" />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                    <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-rose-500">
+                        <h3 className="font-bold text-lg text-slate-800 mb-2 flex items-center">
+                            <Icons.Activity className="mr-2 text-rose-500" /> Impacto en Salud
+                        </h3>
+                        <p className="text-slate-600 text-sm">
+                            Las víctimas acuden a urgencias <strong>1.5 a 3 veces más</strong>. Sin embargo, solo se diagnostican entre el 5-15% de los casos.
+                        </p>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500">
+                        <h3 className="font-bold text-lg text-slate-800 mb-2 flex items-center">
+                            <Icons.Eye className="mr-2 text-amber-500" /> Detección
+                        </h3>
+                        <p className="text-slate-600 text-sm">
+                            El 66% de los profesionales no plantea la VG como diagnóstico diferencial. La detección temprana es vital.
+                        </p>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-emerald-500">
+                        <h3 className="font-bold text-lg text-slate-800 mb-2 flex items-center">
+                            <Icons.FileText className="mr-2 text-emerald-500" /> Marco Legal
+                        </h3>
+                        <p className="text-slate-600 text-sm">
+                            Basado en la Ley Orgánica 1/2004 y el Pacto de Estado. La violencia incluye física, psicológica, sexual y económica.
+                        </p>
+                    </div>
+                </div>
+                
+                <div className="text-center text-slate-400 text-xs mt-8">
+                    Contenido basado en la sesión clínica de Esperanza Soto Rueda. Médica Especialista MFYC.
+                </div>
+            </div>
+        );
+
+        const TypesView = () => {
+            const [activeTab, setActiveTab] = useState('indicators');
+
+            const indicators = [
+                {
+                    category: "Físicos",
+                    icon: Icons.Stethoscope,
+                    color: "text-blue-600",
+                    bg: "bg-blue-50",
+                    items: [
+                        "Contusiones/Hematomas en cara, cuello, espalda.",
+                        "Lesiones en distintos estadios evolutivos.",
+                        "Fracturas atípicas, rotura de tímpano.",
+                        "Quemaduras (cigarrillos, plancha) o mordeduras.",
+                        "Arrancamiento de pelo.",
+                        "Lesiones defensivas en antebrazos."
+                    ]
+                },
+                {
+                    category: "Psicológicos",
+                    icon: Icons.Brain,
+                    color: "text-purple-600",
+                    bg: "bg-purple-50",
+                    items: [
+                        "Ansiedad, ataques de pánico, hipervigilancia.",
+                        "Depresión, baja autoestima, culpa.",
+                        "Abuso de psicofármacos o alcohol.",
+                        "Labilidad emocional, llanto fácil.",
+                        "Quejas somáticas inespecíficas (dolor crónico).",
+                        "Intento de suicidio."
+                    ]
+                },
+                {
+                    category: "Comportamiento (Hombre)",
+                    icon: Icons.Users,
+                    color: "text-rose-600",
+                    bg: "bg-rose-50",
+                    items: [
+                        "No la deja sola, responde por ella.",
+                        "Actitud controladora o paternalista.",
+                        "Se muestra excesivamente solícito o agresivo.",
+                        "Minimiza las lesiones o la situación.",
+                        "Controla su documentación o móvil."
+                    ]
+                }
+            ];
+
+            return (
+                <div className="animate-fade-in">
+                    <SectionTitle icon={Icons.Eye}>Indicadores de Sospecha (ISMT)</SectionTitle>
+                    
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="flex border-b border-slate-200">
+                            <button 
+                                onClick={() => setActiveTab('indicators')}
+                                className={`flex-1 py-4 text-center font-semibold ${activeTab === 'indicators' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                Indicadores de Alarma
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('sor')}
+                                className={`flex-1 py-4 text-center font-semibold ${activeTab === 'sor' ? 'text-rose-600 border-b-2 border-rose-600 bg-rose-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                Situaciones Objetivas de Riesgo (SOR)
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {activeTab === 'indicators' && (
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    {indicators.map((ind, idx) => (
+                                        <div key={idx} className={`${ind.bg} rounded-lg p-5 border border-slate-100 hover:shadow-md transition-shadow`}>
+                                            <div className="flex items-center space-x-2 mb-4">
+                                                <ind.icon className={ind.color} size={24} />
+                                                <h3 className={`font-bold ${ind.color}`}>{ind.category}</h3>
+                                            </div>
+                                            <ul className="space-y-2">
+                                                {ind.items.map((item, i) => (
+                                                    <li key={i} className="flex items-start text-sm text-slate-700">
+                                                        <span className="mr-2 mt-1">•</span>
+                                                        <span>{item}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {activeTab === 'sor' && (
+                                <div className="space-y-4">
+                                     <div className="bg-rose-100 border-l-4 border-rose-600 p-4 rounded-r-lg flex items-start space-x-4">
+                                            <Icons.AlertTriangle className="text-rose-600 flex-shrink-0 mt-1" />
+                                            <div>
+                                                <h3 className="font-bold text-rose-800 text-lg">¿Qué es una Situación Objetiva de Riesgo (SOR)?</h3>
+                                                <p className="text-rose-700 mb-2">
+                                                    Factores que indican que la paciente está en peligro real, independientemente de que ella lo reconozca o denuncie.
+                                                </p>
+                                            </div>
+                                     </div>
+
+                                     <div className="grid md:grid-cols-2 gap-4 mt-4">
+                                         {[
+                                             "Amenazas de muerte o integridad física (mujer o hijos).",
+                                             "Uso de armas (fuego o blancas).",
+                                             "Aumento en frecuencia o gravedad de agresiones.",
+                                             "Menores presencian el maltrato o son maltratados.",
+                                             "Intento de suicidio de la mujer.",
+                                             "Mujer embarazada o con discapacidad.",
+                                             "Aislamiento geográfico o social.",
+                                             "Celos extremos y control obsesivo."
+                                         ].map((risk, i) => (
+                                             <div key={i} className="flex items-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                 <Icons.AlertTriangle size={16} className="text-orange-500 mr-3" />
+                                                 <span className="text-slate-700 text-sm font-medium">{risk}</span>
+                                             </div>
+                                         ))}
+                                     </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AlgorithmView = () => {
+            const [step, setStep] = useState(0);
+            const [history, setHistory] = useState([0]);
+
+            const steps = {
+                0: {
+                    question: "¿Presenta Indicadores de Sospecha de Malos Tratos (ISMT) en el Triaje o Consulta?",
+                    options: [
+                        { label: "SÍ, hay sospecha", next: 1, color: "bg-rose-600 hover:bg-rose-700 text-white" },
+                        { label: "NO, no hay sospecha", next: 99, color: "bg-emerald-600 hover:bg-emerald-700 text-white" }
+                    ]
+                },
+                1: {
+                    question: "Acción Inmediata: Entrevista a solas. Preguntar por la causa de lesiones/síntomas. ¿La paciente RECONOCE los malos tratos?",
+                    note: "Garantizar privacidad y seguridad. Enfoque biopsicosocial.",
+                    options: [
+                        { label: "SÍ reconoce (CMT - Confirmación Malos Tratos)", next: 2, color: "bg-purple-600 hover:bg-purple-700 text-white" },
+                        { label: "NO reconoce (ISMT pero niega)", next: 3, color: "bg-slate-600 hover:bg-slate-700 text-white" }
+                    ]
+                },
+                2: {
+                    question: "Paciente Reconoce (CMT). Valoración de Peligro. ¿Existe situación de PELIGRO EXTREMO?",
+                    note: "Peligro Extremo: Riesgo vital, lesiones graves, amenazas homicidio/suicidio, quebrantamiento orden alejamiento, agresor fuera de control.",
+                    options: [
+                        { label: "SÍ, Peligro Extremo (PLAN D)", next: 'planD', color: "bg-red-600 hover:bg-red-700 text-white border-2 border-red-800" },
+                        { label: "NO, pero hay Riesgo Objetivo (PLAN C)", next: 'planC', color: "bg-orange-500 hover:bg-orange-600 text-white" }
+                    ]
+                },
+                3: {
+                    question: "Paciente NO Reconoce, pero hay Sospecha (ISMT). ¿Existe Situación Objetiva de Riesgo (SOR)?",
+                    note: "Revisar lista SOR: Armas, amenazas graves, menores en riesgo, embarazo, discapacidad...",
+                    options: [
+                        { label: "SÍ, hay SOR (PLAN B)", next: 'planB', color: "bg-amber-500 hover:bg-amber-600 text-white" },
+                        { label: "NO hay SOR aparente (PLAN A)", next: 'planA', color: "bg-blue-500 hover:bg-blue-600 text-white" }
+                    ]
+                },
+                99: {
+                    final: true,
+                    title: "Intervención Estándar",
+                    content: "Intervenir según motivo de consulta clínica habitual.",
+                    color: "bg-emerald-100 border-emerald-500"
+                },
+                'planA': {
+                    final: true,
+                    title: "PLAN A: Sospecha sin Riesgo Objetivo",
+                    badge: "ISMT + No Reconoce + No SOR",
+                    content: (
+                        <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Registrar <strong>ISMT</strong> en Historia Clínica y Motivo Consulta.</li>
+                            <li>Atención clínica de las lesiones.</li>
+                            <li>Informe clínico detallado (sin parte al juzgado si no hay certeza/riesgo).</li>
+                            <li><strong>Derivación a Atención Primaria (48h)</strong>. Comunicar a enfermera de enlace/Trabajo Social.</li>
+                            <li>Informar a la mujer de recursos disponibles (CIM, 016).</li>
+                        </ul>
+                    ),
+                    color: "bg-blue-50 border-blue-500"
+                },
+                'planB': {
+                    final: true,
+                    title: "PLAN B: Sospecha con Riesgo Objetivo",
+                    badge: "ISMT + No Reconoce + SÍ SOR",
+                    content: (
+                        <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Registrar <strong>ISMT</strong> en Historia Clínica.</li>
+                            <li><strong>PARTE A FISCALÍA:</strong> Comunicación al Fiscal Delegado/a Provincial. (No al juzgado de guardia estándar, sino fiscalía especializada).</li>
+                            <li>Fax Fiscalía Córdoba: 957 353 123.</li>
+                            <li>Informe clínico detallado adjunto.</li>
+                            <li>Notificar al equipo de Trabajo Social Sanitario.</li>
+                        </ul>
+                    ),
+                    color: "bg-amber-50 border-amber-500"
+                },
+                'planC': {
+                    final: true,
+                    title: "PLAN C: Maltrato Confirmado (Sin Peligro Extremo)",
+                    badge: "CMT + Reconoce + No Extremo",
+                    content: (
+                        <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                            <li>Registrar <strong>CMT</strong> (Confirmación Malos Tratos) en Historia.</li>
+                            <li>Apertura de Historia VG en Diraya.</li>
+                            <li><strong>PARTE AL JUZGADO</strong> (Obligatorio).</li>
+                            <li>Valoración médica completa + Plan de Seguridad.</li>
+                            <li>Derivación a EAMF (Equipo Atención Mujer) / CIM / SAVA.</li>
+                            <li>Informar del derecho a denuncia (pero el parte médico se envía de oficio).</li>
+                        </ul>
+                    ),
+                    color: "bg-orange-50 border-orange-500"
+                },
+                'planD': {
+                    final: true,
+                    title: "PLAN D: PELIGRO EXTREMO",
+                    badge: "ACTUACIÓN URGENTE",
+                    content: (
+                        <div className="space-y-4">
+                             <div className="flex items-center text-red-700 font-bold bg-red-100 p-3 rounded">
+                                 <Icons.Siren className="mr-3" /> ACTIVAR FUERZAS DE SEGURIDAD
+                             </div>
+                             <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                                <li><strong>No dejar sola a la paciente.</strong> Acompañamiento constante.</li>
+                                <li>Tratamiento de lesiones graves (Valorar ingreso).</li>
+                                <li><strong>PARTE AL JUZGADO INMEDIATO.</strong></li>
+                                <li>Llamar al 091 / 062 / 112.</li>
+                                <li>Si no hay lugar seguro: Teléfono 24h IAM (900 200 999) para acogida inmediata.</li>
+                                <li>Derivación urgente a EAMF y Trabajo Social.</li>
+                            </ul>
+                        </div>
+                    ),
+                    color: "bg-red-50 border-red-600"
+                }
+            };
+
+            const handleNext = (nextStep) => {
+                setHistory([...history, nextStep]);
+                setStep(nextStep);
+            };
+
+            const handleBack = () => {
+                if (history.length > 1) {
+                    const newHistory = [...history];
+                    newHistory.pop();
+                    setHistory(newHistory);
+                    setStep(newHistory[newHistory.length - 1]);
+                }
+            };
+
+            const currentStepData = steps[step];
+
+            return (
+                <div className="animate-fade-in max-w-4xl mx-auto">
+                    <SectionTitle icon={Icons.Activity}>Algoritmo Interactivo de Actuación</SectionTitle>
+                    
+                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden min-h-[400px] flex flex-col">
+                        <div className="w-full bg-slate-100 h-2">
+                            <div 
+                                className="bg-purple-600 h-2 transition-all duration-500" 
+                                style={{ width: `${(history.length / 4) * 100}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="p-8 flex-1 flex flex-col justify-center">
+                            {history.length > 1 && (
+                                 <button onClick={handleBack} className="text-slate-400 hover:text-slate-600 text-sm mb-4 flex items-center self-start">
+                                     &larr; Volver al paso anterior
+                                 </button>
+                            )}
+
+                            {!currentStepData.final ? (
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-4 text-center">{currentStepData.question}</h3>
+                                    {currentStepData.note && (
+                                        <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm mb-8 max-w-2xl mx-auto flex items-start">
+                                             <Icons.Info size={16} className="mt-1 mr-2 flex-shrink-0" />
+                                             {currentStepData.note}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto w-full">
+                                        {currentStepData.options.map((opt, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleNext(opt.next)}
+                                                className={`${opt.color} py-6 px-6 rounded-xl font-bold text-lg shadow-md transition transform hover:scale-105 flex flex-col items-center text-center justify-center`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className={`text-center p-6 rounded-xl border-2 ${currentStepData.color}`}>
+                                    {currentStepData.badge && (
+                                        <span className="inline-block bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold mb-4">
+                                            {currentStepData.badge}
+                                        </span>
+                                    )}
+                                    <h3 className="text-3xl font-extrabold text-slate-800 mb-6">{currentStepData.title}</h3>
+                                    <div className="text-left max-w-xl mx-auto bg-white p-6 rounded-lg shadow-sm">
+                                        {currentStepData.content}
+                                    </div>
+                                    <button 
+                                        onClick={() => { setStep(0); setHistory([0]); }}
+                                        className="mt-8 text-purple-600 font-semibold hover:underline"
+                                    >
+                                        Reiniciar Algoritmo
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const CasesView = () => {
+            const cases = [
+                {
+                    title: "Caso 1: Ana, 28 años",
+                    desc: "Contusión en pómulo. Dice 'caída en ducha'. Ansiedad leve, evita contacto visual. Acompañada por pareja que responde por ella.",
+                    question: "¿Actuación más adecuada?",
+                    options: [
+                        { id: 'A', text: "Registrar como accidente doméstico y alta." },
+                        { id: 'B', text: "Indagar en privado y aplicar indicadores de sospecha.", correct: true },
+                        { id: 'C', text: "Emitir parte judicial inmediatamente sin más datos." }
+                    ],
+                    explanation: "Correcto. Ante signos de control por la pareja y lesiones/actitud sospechosa, la prioridad es separar a la paciente para entrevistar a solas con seguridad."
+                },
+                {
+                    title: "Caso 3: Rosa, 36 años",
+                    desc: "Fractura de antebrazo. Dice haberse caído, pero muestra miedo y sufrimiento. Antecedentes de lesiones previas en historia.",
+                    question: "¿Cómo proceder?",
+                    options: [
+                        { id: 'A', text: "Respetar su versión y tratar la fractura." },
+                        { id: 'B', text: "Forzar verbalización para notificar." },
+                        { id: 'C', text: "Registrar como sospecha (ISMT), activar historia VG y derivar.", correct: true }
+                    ],
+                    explanation: "Correcto. Si no reconoce pero hay indicadores claros, iniciamos el Plan A/B: registro como sospecha y derivación para seguimiento, sin forzar."
+                },
+                {
+                    title: "Caso 4: Miriam, 51 años",
+                    desc: "Llega desorientada, hematomas múltiples. Dice que su pareja la ha golpeado hoy y teme por su vida. Hijos menores en casa.",
+                    question: "¿Actuación INMEDIATA?",
+                    options: [
+                        { id: 'A', text: "Derivar a Primaria en 48h." },
+                        { id: 'B', text: "Emitir Parte Juzgado, Activar Policía y Valorar Ingreso.", correct: true },
+                        { id: 'C', text: "Esperar a que decida denunciar." }
+                    ],
+                    explanation: "Correcto. Es una Situación de Peligro Extremo (Plan D). Requiere protección inmediata policial y judicial."
+                }
+            ];
+
+            const [activeCase, setActiveCase] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [showExplanation, setShowExplanation] = useState(false);
+
+            const handleSelect = (idx, isCorrect) => {
+                setSelectedOption(idx);
+                setShowExplanation(true);
+            };
+
+            const nextCase = () => {
+                if (activeCase < cases.length - 1) {
+                    setActiveCase(activeCase + 1);
+                    setSelectedOption(null);
+                    setShowExplanation(false);
+                }
+            };
+
+            const current = cases[activeCase];
+
+            return (
+                <div className="animate-fade-in max-w-3xl mx-auto">
+                    <SectionTitle icon={Icons.Brain}>Entrenamiento: Casos Clínicos</SectionTitle>
+
+                    <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-slate-800">{current.title}</h3>
+                            <span className="text-sm text-slate-400">Caso {activeCase + 1} de {cases.length}</span>
+                        </div>
+
+                        <div className="bg-slate-50 p-4 rounded-lg mb-6 text-slate-700 italic border-l-4 border-purple-400">
+                            "{current.desc}"
+                        </div>
+
+                        <h4 className="font-bold text-slate-800 mb-4">{current.question}</h4>
+
+                        <div className="space-y-3">
+                            {current.options.map((opt, idx) => (
+                                <button
+                                    key={idx}
+                                    disabled={showExplanation}
+                                    onClick={() => handleSelect(idx, opt.correct)}
+                                    className={`w-full text-left p-4 rounded-lg border transition-all ${
+                                        selectedOption === idx 
+                                            ? opt.correct 
+                                                ? 'bg-green-100 border-green-500 text-green-800'
+                                                : 'bg-red-100 border-red-500 text-red-800'
+                                            : 'bg-white border-slate-200 hover:bg-purple-50 hover:border-purple-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center">
+                                         <div className={`w-6 h-6 rounded-full border flex items-center justify-center mr-3 ${
+                                             selectedOption === idx ? 'border-current' : 'border-slate-300'
+                                         }`}>
+                                                {idx === 0 ? 'A' : idx === 1 ? 'B' : 'C'}
+                                         </div>
+                                         {opt.text}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {showExplanation && (
+                            <div className="mt-6 animate-fade-in">
+                                 <div className={`p-4 rounded-lg ${current.options[selectedOption].correct ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                     <p className="font-bold mb-1">{current.options[selectedOption].correct ? '¡Correcto!' : 'Incorrecto'}</p>
+                                     <p>{current.explanation}</p>
+                                 </div>
+                                 
+                                 {activeCase < cases.length - 1 && (
+                                     <button 
+                                         onClick={nextCase}
+                                         className="mt-4 w-full bg-slate-800 text-white py-3 rounded-lg hover:bg-slate-700"
+                                     >
+                                         Siguiente Caso
+                                     </button>
+                                 )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const ResourcesView = () => (
+            <div className="animate-fade-in">
+                <SectionTitle icon={Icons.PhoneCall}>Recursos y Contactos</SectionTitle>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Internal Resources */}
+                    <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-purple-600">
+                        <h3 className="text-xl font-bold mb-4 flex items-center text-purple-800">
+                            <Icons.HeartPulse className="mr-2" /> Recursos AGS Sur de Córdoba
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                                <h4 className="font-bold text-purple-900">Equipo de Atención a la Mujer (EAMF)</h4>
+                                <p className="text-sm text-purple-700 mb-2">Atención y seguimiento (presencial/teleasistencia). Derivación de todos los casos CMT o ISMT.</p>
+                                <div className="space-y-1 text-sm font-medium">
+                                    <p className="flex items-center"><Icons.PhoneCall size={14} className="mr-2"/> 682 784 185 / 682 769 449</p>
+                                    <p className="flex items-center"><Icons.Users size={14} className="mr-2"/> Enf: Verónica León / Silvia Sánchez</p>
+                                    <p className="flex items-center"><Icons.Users size={14} className="mr-2"/> TS: Monserrat (Corp: 654568)</p>
+                                </div>
+                            </div>
+                            <div className="text-sm text-slate-600">
+                                 <p className="mb-1"><strong>Fax Fiscalía Córdoba:</strong> 957 353 123</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* External Resources */}
+                    <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-slate-600">
+                        <h3 className="text-xl font-bold mb-4 flex items-center text-slate-800">
+                            <Icons.PhoneCall className="mr-2" /> Recursos Externos 24h
+                        </h3>
+                        <div className="space-y-3">
+                             <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
+                                 <span className="font-bold text-slate-700">Atención Víctimas (No deja rastro)</span>
+                                 <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold">016</span>
+                             </div>
+                             <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
+                                 <span className="font-bold text-slate-700">IAM (Acogida Inmediata)</span>
+                                 <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold">900 200 999</span>
+                             </div>
+                             <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
+                                 <span className="font-bold text-slate-700">Emergencias Sanitarias</span>
+                                 <span className="bg-rose-600 text-white px-3 py-1 rounded-full font-bold">061 / 112</span>
+                             </div>
+                             <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
+                                 <span className="font-bold text-slate-700">Policía Nacional</span>
+                                 <span className="bg-blue-600 text-white px-3 py-1 rounded-full font-bold">091</span>
+                             </div>
+                             <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg">
+                                 <span className="font-bold text-slate-700">Guardia Civil</span>
+                                 <span className="bg-green-600 text-white px-3 py-1 rounded-full font-bold">062</span>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quality Indicators */}
+                <div className="mt-8 bg-white rounded-xl shadow-md p-6">
+                    <h3 className="text-lg font-bold mb-4 text-slate-800 flex items-center">
+                        <Icons.CheckCircle className="mr-2 text-green-500" /> Indicadores de Calidad (Parte al Juzgado)
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-600">
+                        <ul className="space-y-2 list-disc pl-5">
+                            <li><strong>Tiempo:</strong> Emisión en &lt; 24h.</li>
+                            <li><strong>Completitud:</strong> Rellenar campos obligatorios (lesiones, relato literal, medidas).</li>
+                            <li><strong>Consistencia:</strong> Coherencia entre hallazgos y relato.</li>
+                        </ul>
+                        <ul className="space-y-2 list-disc pl-5">
+                            <li><strong>Trazabilidad:</strong> Registro en DIRAYA y Hoja VG.</li>
+                            <li><strong>Juicio Clínico:</strong> Codificación CIE-10 correcta.</li>
+                            <li><strong>Literalidad:</strong> Usar las palabras exactas de la paciente entrecomilladas ("...").</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [activeView, setActiveView] = useState('home');
+
+            return (
+                <div className="min-h-screen pb-12">
+                    <Header setView={setActiveView} activeView={activeView} />
+                    
+                    <main className="max-w-6xl mx-auto p-4 md:p-8">
+                        {activeView === 'home' && <HomeView setView={setActiveView} />}
+                        {activeView === 'types' && <TypesView />}
+                        {activeView === 'algorithm' && <AlgorithmView />}
+                        {activeView === 'cases' && <CasesView />}
+                        {activeView === 'resources' && <ResourcesView />}
+                    </main>
+
+                    <div className="fixed bottom-4 right-4 z-50">
+                        <a 
+                            href="https://www.google.com" 
+                            className="bg-red-600 text-white px-4 py-3 rounded-full shadow-lg font-bold flex items-center hover:bg-red-700 transition-colors border-4 border-white"
+                            title="Salir rápido a Google"
+                        >
+                            <Icons.XCircle className="mr-2" size={20} /> Salida Rápida
+                        </a>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
